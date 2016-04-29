@@ -14,14 +14,21 @@ class	LatestKernel( object ):
 		return platform.release()
 
 	def	kernels( self ):
-		return os.listdir( '/lib/modules' )
+		uname = self.uname()
+		for entry in os.listdir( '/lib/modules' ):
+			yield(
+				entry == uname,
+				entry
+			)
+		return
 
 if __name__ == '__main__':
 	lk = LatestKernel()
 	uname = lk.uname()
-	for kernel in sorted( lk.kernels() ):
+	for thumb,entry in lk.kernels():
 		print '{0:<3} {1}'.format(
-			'-->' if kernel == uname else '',
-			kernel
+			'-->' if thumb else '',
+			entry,
+			entry
 		)
 	exit( 0 )

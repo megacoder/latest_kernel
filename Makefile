@@ -13,20 +13,20 @@ endif
 
 .PHONY: ${TARGETS} ${SUBDIRS}
 
-all::	latest_kernel.py
+all::	latest-kernel.py
 
 ${TARGETS}::
 
 clobber distclean:: clean
 
-check::	latest_kernel.py
-	./latest_kernel.py ${ARGS}
+check::	latest-kernel.py
+	./latest-kernel.py ${ARGS}
 
-install:: latest_kernel.py
-	${INSTALL} -D latest_kernel.py ${BINDIR}/latest_kernel
+install:: latest-kernel.py
+	${INSTALL} -D latest-kernel.py ${BINDIR}/latest-kernel
 
 uninstall::
-	${RM} ${BINDIR}/latest_kernel
+	${RM} ${BINDIR}/latest-kernel ${BINDIR}/latest_kernel
 
 ifneq	(,${SUBDIRS})
 ${TARGETS}::

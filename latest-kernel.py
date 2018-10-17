@@ -5,6 +5,7 @@ import	os
 import	platform
 import	re
 import	sys
+import	subprocess
 
 class	VersionSort( object ):
 
@@ -48,25 +49,47 @@ class	LatestKernel( object ):
 	def	uname( self ):
 		return platform.release()
 
+	def	rpm_name_for( self, version ):
+		cmd = [
+			'/bin/rpm',
+			'-q',
+			'-f',
+			'--qf=%{NAME}-%{EVR}.%{ARCH}.rpm',
+			'/lib/modules/{0}'.format( version )
+		]
+		# print >>sys.stderr, ' '.join( cmd )
+		try:
+			output = subprocess.check_output(
+				cmd,
+				stderr = subprocess.STDOUT
+			)
+			valid = True
+		except Exception, e:
+			output = 'UNKNOWN'
+			valid = False
+		return valid, output
+
 	def	kernels( self ):
 		vs = VersionSort()
 		uname = self.uname()
 		for entry in os.listdir( '/lib/modules' ):
 			vs.add( entry )
 		for entry in vs.sort():
+			valid, rpm = self.rpm_name_for( entry )
 			yield(
 				entry == uname,
-				entry
+				entry,
+				rpm if valid else '*** {0} ***'.format( rpm )
 			)
 		return
 
 if __name__ == '__main__':
 	lk = LatestKernel()
 	uname = lk.uname()
-	for thumb,entry in lk.kernels():
-		print '{0:<3} {1}'.format(
+	for thumb,entry,rpm in lk.kernels():
+		print '{0:<3} {1:<31} {2}'.format(
 			'-->' if thumb else '',
 			entry,
-			entry
+			rpm
 		)
 	exit( 0 )

@@ -6,6 +6,9 @@ import	platform
 import	re
 import	sys
 import	subprocess
+import	argparse
+
+Version = '0.0.1'
 
 class	VersionSort( object ):
 
@@ -44,10 +47,30 @@ class	VersionSort( object ):
 class	LatestKernel( object ):
 
 	def	__init__( self ):
+		self.libdir = '/lib/modules'
 		return
 
 	def	uname( self ):
 		return platform.release()
+
+	def	purge_orphan( self, version ):
+		cmd = [
+			'/bin/rm',
+			'-r',
+			'-f',
+			os.path.join(
+				self.libdir,
+				version
+			)
+		]
+		try:
+			_, _ = subprocess.check_output(
+				cmd,
+				stderr = subprocess.STDOUT
+			)
+		except Exception, e:
+			_ = None
+		return
 
 	def	rpm_name_for( self, version ):
 		cmd = [
@@ -55,41 +78,89 @@ class	LatestKernel( object ):
 			'-q',
 			'-f',
 			'--qf=%{NAME}-%{EVR}.%{ARCH}.rpm',
-			'/lib/modules/{0}'.format( version )
+			os.path.join(
+				self.libdir,
+				version
+			)
 		]
 		# print >>sys.stderr, ' '.join( cmd )
+		known = False
 		try:
 			output = subprocess.check_output(
 				cmd,
 				stderr = subprocess.STDOUT
 			)
-			valid = True
+			known = True
 		except Exception, e:
-			output = 'UNKNOWN'
-			valid = False
-		return valid, output
+			output = None
+		return known, output
 
 	def	kernels( self ):
-		vs = VersionSort()
 		uname = self.uname()
-		for entry in os.listdir( '/lib/modules' ):
-			vs.add( entry )
-		for entry in vs.sort():
-			valid, rpm = self.rpm_name_for( entry )
-			yield(
-				entry == uname,
-				entry,
-				rpm if valid else '*** {0} ***'.format( rpm )
+		vs = VersionSort()
+		for version in os.listdir( self.libdir ):
+			vs.add( version )
+		for version in vs.sort():
+			known, rpm = self.rpm_name_for( version )
+			info = dict(
+				current = (version == uname),
+				orphan  = not known,
+				rpm     = rpm if known else '*** {0} ***'.format( 'ORPHAN' ),
+				version = version,
+				where   = os.path.join(
+					self.libdir,
+					version
+				)
 			)
+			yield( info )
 		return
 
-if __name__ == '__main__':
-	lk = LatestKernel()
-	uname = lk.uname()
-	for thumb,entry,rpm in lk.kernels():
-		print '{0:<3} {1:<31} {2}'.format(
-			'-->' if thumb else '',
-			entry,
-			rpm
+	def	main( self ):
+		prog = os.path.splitext(
+			os.path.basename(
+					sys.argv[ 0 ]
+			)
 		)
-	exit( 0 )
+		if prog == '__init__':
+			prog = 'latest-kernel'
+		p = argparse.ArgumentParser(
+			prog = prog,
+			description = '''Show available kernels and their RPM name.
+			Optionally delete orphan directory trees in "/lib/modules"
+			for neatness.'''
+		)
+		p.add_argument(
+			'-d',
+			'--delete-orphans',
+			dest   = 'clean_orphans',
+			action = 'store_true',
+			help   = 'delete orphan /lib/modules trees.',
+		)
+		p.add_argument(
+			'--version',
+			action  = 'version',
+			version = Version,
+			help    = 'program version',
+		)
+		self.opts = p.parse_args()
+		if self.opts.clean_orphans and os.geteuid() != 0:
+			print(
+				'Must be root to purge orphans.'
+			)
+			return 1
+		print( 'geteuid()={0}'.format( os.geteuid() ) )
+		uname = self.uname()
+		for info in self.kernels():
+			print(
+				'{0:<3} {1:<31} {2}'.format(
+					'-->' if info[ 'current' ] else '',
+					info[ 'version' ],
+					info[ 'rpm' ],
+				)
+			)
+			if info[ 'orphan' ] and self.opts.clean_orphans:
+				self.purge_orphan( info[ 'where' ] )
+		return 0
+
+if __name__ == '__main__':
+	exit( LatestKernel().main() )

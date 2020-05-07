@@ -8,7 +8,7 @@ import	sys
 import	subprocess
 import	argparse
 
-Version = '0.0.1'
+Version = '2.0.1'
 
 class	VersionSort( object ):
 
@@ -63,13 +63,20 @@ class	LatestKernel( object ):
 				version
 			)
 		]
-		try:
-			_, _ = subprocess.check_output(
-				cmd,
-				stderr = subprocess.STDOUT
+		if self.opts.kidding:
+			prompt = '$' if os.geteuid() else '#'
+			print(
+				'{0} '.format( prompt ) +
+				( ' '.join( cmd ) )
 			)
-		except Exception, e:
-			_ = None
+		else:
+			try:
+				_, _ = subprocess.check_output(
+					cmd,
+					stderr = subprocess.STDOUT
+				)
+			except Exception, e:
+				_ = None
 		return
 
 	def	rpm_name_for( self, version ):
@@ -137,6 +144,13 @@ class	LatestKernel( object ):
 			help   = 'delete orphan /lib/modules trees.',
 		)
 		p.add_argument(
+			'-n',
+			'--just-kidding',
+			dest   = 'kidding',
+			action = 'store_true',
+			help   = 'show (not do) how to delete orphans',
+		)
+		p.add_argument(
 			'--version',
 			action  = 'version',
 			version = Version,
@@ -148,7 +162,6 @@ class	LatestKernel( object ):
 				'Must be root to purge orphans.'
 			)
 			return 1
-		print( 'geteuid()={0}'.format( os.geteuid() ) )
 		uname = self.uname()
 		for info in self.kernels():
 			print(

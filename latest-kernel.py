@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # vim: noet sw=4 ts=4
 
 import	os
@@ -8,7 +8,7 @@ import	sys
 import	subprocess
 import	argparse
 
-Version = '2.0.1'
+Version = '2.0.2'
 
 class	VersionSort( object ):
 
@@ -75,7 +75,7 @@ class	LatestKernel( object ):
 					cmd,
 					stderr = subprocess.STDOUT
 				)
-			except Exception, e:
+			except Exception as e:
 				_ = None
 		return
 
@@ -98,7 +98,7 @@ class	LatestKernel( object ):
 				stderr = subprocess.STDOUT
 			)
 			known = True
-		except Exception, e:
+		except Exception as e:
 			output = None
 		return known, output
 
@@ -168,7 +168,7 @@ class	LatestKernel( object ):
 				'{0:<3} {1:<31} {2}'.format(
 					'-->' if info[ 'current' ] else '',
 					info[ 'version' ],
-					info[ 'rpm' ],
+					info[ 'rpm' ].decode( 'utf-8' ),
 				)
 			)
 			if info[ 'orphan' ] and self.opts.clean_orphans:

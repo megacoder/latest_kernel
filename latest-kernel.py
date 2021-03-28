@@ -84,7 +84,7 @@ class	LatestKernel( object ):
 			'/bin/rpm',
 			'-q',
 			'-f',
-			'--qf=%{NAME}-%{EVR}.%{ARCH}.rpm',
+			'--qf=%-40{NEVRA}  %{INSTALLTIME:day}',
 			os.path.join(
 				self.libdir,
 				version
@@ -165,9 +165,8 @@ class	LatestKernel( object ):
 		uname = self.uname()
 		for info in self.kernels():
 			print(
-				'{0:<3} {1:<31} {2}'.format(
+				'{0:<3} {1}'.format(
 					'-->' if info[ 'current' ] else '',
-					info[ 'version' ],
 					info[ 'rpm' ],
 				)
 			)

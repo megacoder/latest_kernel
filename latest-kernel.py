@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #!/usr/bin/python2
 # vim: noet sw=4 ts=4
 
@@ -40,7 +40,10 @@ class	VersionSort( object ):
 		return
 
 	def	sort( self ):
-		for key,item in sorted( self.items ):
+		for key,item in sorted(
+			self.items,
+			key = lambda k : k
+		):
 			# print '{0}\t{1}'.format( key, item )
 			yield item
 		return
@@ -49,10 +52,8 @@ class	LatestKernel( object ):
 
 	def	__init__( self ):
 		self.libdir = '/lib/modules'
+		self.uname_r = platform.release()
 		return
-
-	def	uname( self ):
-		return platform.release()
 
 	def	purge_orphan( self, version ):
 		cmd = [
@@ -76,7 +77,7 @@ class	LatestKernel( object ):
 					cmd,
 					stderr = subprocess.STDOUT
 				)
-			except Exception, e:
+			except Exception as e:
 				_ = None
 		return
 
@@ -99,19 +100,22 @@ class	LatestKernel( object ):
 				stderr = subprocess.STDOUT
 			)
 			known = True
-		except Exception, e:
+			if False:
+				print(
+					f'output={output}, type={type(output)}'
+				)
+		except Exception as e:
 			output = None
-		return known, output
+		return known, output.decode( 'utf-8' ) if output else output
 
 	def	kernels( self ):
-		uname = self.uname()
 		vs = VersionSort()
 		for version in os.listdir( self.libdir ):
 			vs.add( version )
 		for version in vs.sort():
 			known, rpm = self.rpm_name_for( version )
 			info = dict(
-				current = (version == uname),
+				current = (version == self.uname_r),
 				orphan  = not known,
 				rpm     = rpm if known else '*** {0} ***'.format( 'ORPHAN' ),
 				version = version,
@@ -163,7 +167,6 @@ class	LatestKernel( object ):
 				'Must be root to purge orphans.'
 			)
 			return 1
-		uname = self.uname()
 		for info in self.kernels():
 			print(
 				'{0:<3} {1}'.format(

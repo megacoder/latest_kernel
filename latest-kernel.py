@@ -8,6 +8,7 @@ import	re
 import	sys
 import	subprocess
 import	argparse
+import	natsort
 
 Version = '2.0.1'
 
@@ -40,9 +41,9 @@ class	VersionSort( object ):
 		return
 
 	def	sort( self ):
-		for key,item in sorted(
+		for key,item in natsort.humansorted(
 			self.items,
-			key = lambda k : k
+			key = lambda s : s
 		):
 			# print '{0}\t{1}'.format( key, item )
 			yield item

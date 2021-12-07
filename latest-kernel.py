@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #!/usr/bin/env python2
 # vim: noet sw=4 ts=4
 
@@ -75,7 +76,7 @@ class	LatestKernel( object ):
 					cmd,
 					stderr = subprocess.STDOUT
 				)
-			except Exception, e:
+			except Exception as e:
 				_ = None
 		return
 
@@ -98,7 +99,7 @@ class	LatestKernel( object ):
 				stderr = subprocess.STDOUT
 			)
 			known = True
-		except Exception, e:
+		except Exception as e:
 			output = None
 		return known, output
 
@@ -127,7 +128,7 @@ class	LatestKernel( object ):
 			os.path.basename(
 					sys.argv[ 0 ]
 			)
-		)
+		)[ 0 ]
 		if prog == '__init__':
 			prog = 'latest-kernel'
 		p = argparse.ArgumentParser(

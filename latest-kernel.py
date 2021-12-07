@@ -40,7 +40,6 @@ class	VersionSort( object ):
 
 	def	sort( self ):
 		for key,item in sorted( self.items ):
-			# print '{0}\t{1}'.format( key, item )
 			yield item
 		return
 
@@ -73,7 +72,8 @@ class	LatestKernel( object ):
 			try:
 				_, _ = subprocess.check_output(
 					cmd,
-					stderr = subprocess.STDOUT
+					stderr = subprocess.STDOUT,
+					text   = True
 				)
 			except Exception as e:
 				_ = None
@@ -95,7 +95,8 @@ class	LatestKernel( object ):
 		try:
 			output = subprocess.check_output(
 				cmd,
-				stderr = subprocess.STDOUT
+				stderr = subprocess.STDOUT,
+				text   = True,
 			)
 			known = True
 		except Exception as e:

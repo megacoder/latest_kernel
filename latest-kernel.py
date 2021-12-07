@@ -168,7 +168,7 @@ class	LatestKernel( object ):
 				'{0:<3} {1:<31} {2}'.format(
 					'-->' if info[ 'current' ] else '',
 					info[ 'version' ],
-					info[ 'rpm' ],
+					info[ 'rpm' ].decode( 'utf-8' ),
 				)
 			)
 			if info[ 'orphan' ] and self.opts.clean_orphans:

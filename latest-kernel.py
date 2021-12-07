@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # vim: noet sw=4 ts=4
 
 import	os
@@ -7,6 +7,7 @@ import	re
 import	sys
 import	subprocess
 import	argparse
+import	natsort
 
 Version = '2.0.5'
 
@@ -39,7 +40,11 @@ class	VersionSort( object ):
 		return
 
 	def	sort( self ):
-		for key,item in sorted( self.items ):
+		for key,item in natsort.humansorted(
+			self.items,
+			key = lambda s : s
+		):
+			# print '{0}\t{1}'.format( key, item )
 			yield item
 		return
 
@@ -47,10 +52,8 @@ class	LatestKernel( object ):
 
 	def	__init__( self ):
 		self.libdir = '/lib/modules'
+		self.uname_r = platform.release()
 		return
-
-	def	uname( self ):
-		return platform.release()
 
 	def	purge_orphan( self, version ):
 		cmd = [
@@ -84,7 +87,7 @@ class	LatestKernel( object ):
 			'/bin/rpm',
 			'-q',
 			'-f',
-			'--qf=%{NAME}-%{EVR}.%{ARCH}.rpm',
+			'--qf=%-40{NEVRA}  %{INSTALLTIME:day}',
 			os.path.join(
 				self.libdir,
 				version
@@ -104,14 +107,13 @@ class	LatestKernel( object ):
 		return known, output
 
 	def	kernels( self ):
-		uname = self.uname()
 		vs = VersionSort()
 		for version in os.listdir( self.libdir ):
 			vs.add( version )
 		for version in vs.sort():
 			known, rpm = self.rpm_name_for( version )
 			info = dict(
-				current = (version == uname),
+				current = (version == self.uname_r),
 				orphan  = not known,
 				rpm     = rpm if known else '*** {0} ***'.format( 'ORPHAN' ),
 				version = version,
@@ -120,7 +122,7 @@ class	LatestKernel( object ):
 					version
 				)
 			)
-			yield( info )
+			yield info
 		return
 
 	def	main( self ):
@@ -136,6 +138,13 @@ class	LatestKernel( object ):
 			description = '''Show available kernels and their RPM name.
 			Optionally delete orphan directory trees in "/lib/modules"
 			for neatness.'''
+		)
+		p.add_argument(
+			'-a',
+			'--all',
+			dest   = 'all',
+			action = 'store_true',
+			help   = 'also show RPM info',
 		)
 		p.add_argument(
 			'-d',
@@ -163,13 +172,25 @@ class	LatestKernel( object ):
 				'Must be root to purge orphans.'
 			)
 			return 1
-		uname = self.uname()
+		#
+		width = max(
+			map(
+				lambda info : len( info['version'] ),
+				self.kernels()
+			)
+		)
+		thumb = '-->'
+		fmt = '{{0:<{0:d}}} {{1:{1:d}}}  {{2}}'.format(
+			len( thumb ),
+			width,
+		)
+		#
 		for info in self.kernels():
 			print(
-				'{0:<3} {1:<31} {2}'.format(
-					'-->' if info[ 'current' ] else '',
+				fmt.format(
+					thumb if info['current'] else '',
 					info[ 'version' ],
-					info[ 'rpm' ],
+					info[ 'rpm' ] if self.opts.all else '',
 				)
 			)
 			if info[ 'orphan' ] and self.opts.clean_orphans:

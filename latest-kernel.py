@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python2
 # vim: noet sw=4 ts=4
 
 import	os
@@ -9,7 +8,7 @@ import	sys
 import	subprocess
 import	argparse
 
-Version = '2.0.1'
+Version = '2.0.3'
 
 class	VersionSort( object ):
 
